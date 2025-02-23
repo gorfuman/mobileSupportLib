@@ -191,7 +191,7 @@ function Library:MakeDraggable(Instance, Cutoff)
 
     Instance.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            print(input.UserInputType)
+         
             dragInput = input
         end
     end)
