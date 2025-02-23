@@ -9,7 +9,7 @@ local RenderStepped = RunService.RenderStepped;
 local LocalPlayer = Players.LocalPlayer;
 local Mouse = LocalPlayer:GetMouse();
 
-local isMobile = UserInputService.TouchEnabled
+local isMobile = InputService.TouchEnabled
 
 isMobile = true
 
