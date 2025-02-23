@@ -155,7 +155,7 @@ function Library:CreateLabel(Properties, IsHud)
     Library:ApplyTextStroke(_Instance);
 
     Library:AddToRegistry(_Instance, {
-        TextColor3 = 'FontColor';
+        TextColor3 = 'FontColor';  
     }, IsHud);
 
     return Library:Create(_Instance, Properties);
@@ -172,7 +172,7 @@ function Library:MakeDraggable(Instance, Cutoff)
                 input.Position.Y - Instance.AbsolutePosition.Y
             )
 
-            -- Prevent dragging from below the cutoff height
+            -- Prevent dragging if clicking below the cutoff height
             if ObjPos.Y > (Cutoff or 40) then
                 return
             end
@@ -685,7 +685,7 @@ do
 
 
         local ContextMenu = {}
-        
+        do
             ContextMenu.Options = {}
             ContextMenu.Container = Library:Create('Frame', {
                 BorderColor3 = Color3.new(),
@@ -694,7 +694,7 @@ do
                 Visible = false,
                 Parent = ScreenGui
             })
-        
+
             ContextMenu.Inner = Library:Create('Frame', {
                 BackgroundColor3 = Library.BackgroundColor;
                 BorderColor3 = Library.OutlineColor;
@@ -776,10 +776,15 @@ do
                     { TextColor3 = 'AccentColor' },
                     { TextColor3 = 'FontColor' }
                 );
-                Button.MouseButton1Click:Connect(function()
+
+                Button.InputBegan:Connect(function(Input)
+                    if input.UserInputType ~= Enum.UserInputType.MouseButton1 or input.UserInputType ~= Enum.UserInputType.Touch then
+                        return
+                    end
+
                     Callback()
                 end)
-                
+            end
 
             ContextMenu:AddOption('Copy color', function()
                 Library.ColorClipboard = ColorPicker.Value
@@ -910,144 +915,124 @@ do
             ColorPicker:Display();
         end;
 
-        local function UpdateSaturationAndBrightness(input)
-            local MinX = SatVibMap.AbsolutePosition.X
-            local MaxX = MinX + SatVibMap.AbsoluteSize.X
-            local MouseX = math.clamp(input.Position.X, MinX, MaxX)
+        SatVibMap.InputBegan:Connect(function(Input)
+            -- Check for Mouse or Touch input
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                -- If touch input, get position from Input.Position
+                local GetInputPosition = (Input.UserInputType == Enum.UserInputType.Touch) and Input.Position or Vector2.new(Mouse.X, Mouse.Y)
         
-            local MinY = SatVibMap.AbsolutePosition.Y
-            local MaxY = MinY + SatVibMap.AbsoluteSize.Y
-            local MouseY = math.clamp(input.Position.Y, MinY, MaxY)
+                -- While the input is held down, continue updating
+                while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or Input.UserInputType == Enum.UserInputType.Touch do
+                    -- Get the bounds of the SatVibMap
+                    local MinX = SatVibMap.AbsolutePosition.X
+                    local MaxX = MinX + SatVibMap.AbsoluteSize.X
+                    local MinY = SatVibMap.AbsolutePosition.Y
+                    local MaxY = MinY + SatVibMap.AbsoluteSize.Y
         
-            ColorPicker.Sat = (MouseX - MinX) / (MaxX - MinX)
-            ColorPicker.Vib = 1 - ((MouseY - MinY) / (MaxY - MinY))
-            ColorPicker:Display()
-        end
+                    -- Get Mouse or Touch Position and clamp it within the bounds
+                    local MouseX = math.clamp(GetInputPosition.X, MinX, MaxX)
+                    local MouseY = math.clamp(GetInputPosition.Y, MinY, MaxY)
         
-        local function UpdateHue(input)
-            local MinY = HueSelectorInner.AbsolutePosition.Y
-            local MaxY = MinY + HueSelectorInner.AbsoluteSize.Y
-            local MouseY = math.clamp(input.Position.Y, MinY, MaxY)
+                    -- Update the Sat and Vib values based on position
+                    ColorPicker.Sat = (MouseX - MinX) / (MaxX - MinX)
+                    ColorPicker.Vib = 1 - ((MouseY - MinY) / (MaxY - MinY))
+                    ColorPicker:Display()
         
-            ColorPicker.Hue = ((MouseY - MinY) / (MaxY - MinY))
-            ColorPicker:Display()
-        end
+                    -- Wait for the next frame to continue
+                    RenderStepped:Wait()
         
-        local function HandleInputBegan(input, updateFunction)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                updateFunction(input)
-        
-                local moveConnection
-                moveConnection = InputService.InputChanged:Connect(function(moveInput)
-                    if moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch then
-                        updateFunction(moveInput)
+                    -- Update the position if it's a touch event
+                    if Input.UserInputType == Enum.UserInputType.Touch then
+                        GetInputPosition = Input.Position
                     end
-                end)
+                end
         
-                local releaseConnection
-                releaseConnection = InputService.InputEnded:Connect(function(endInput)
-                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
-                        moveConnection:Disconnect()
-                        releaseConnection:Disconnect()
-                        Library:AttemptSave()
-                    end
-                end)
+                -- Save the changes when input is released
+                Library:AttemptSave()
             end
-        end
-        
-        -- 🟢 Universal Input Handling for Saturation/Brightness
-        SatVibMap.InputBegan:Connect(function(input)
-            HandleInputBegan(input, UpdateSaturationAndBrightness)
         end)
         
-        -- 🟢 Universal Input Handling for Hue Selector
-        HueSelectorInner.InputBegan:Connect(function(input)
-            HandleInputBegan(input, UpdateHue)
-        end)
-        
-        -- 🟢 Universal Input Handling for Color Picker Display
-        DisplayFrame.InputBegan:Connect(function(input)
-            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) 
-                and not Library:MouseIsOverOpenedFrame() then
+
+        HueSelectorInner.InputBegan:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or Input.UserInputType == Enum.UserInputType.Touch do
+                    local MinY = HueSelectorInner.AbsolutePosition.Y;
+                    local MaxY = MinY + HueSelectorInner.AbsoluteSize.Y;
+                    local MouseY = math.clamp(Mouse.Y, MinY, MaxY);
+
+                    ColorPicker.Hue = ((MouseY - MinY) / (MaxY - MinY));
+                    ColorPicker:Display();
+
+                    RenderStepped:Wait();
+                end;
+
+                Library:AttemptSave();
+            end;
+        end);
+
+        DisplayFrame.InputBegan:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch and not Library:MouseIsOverOpenedFrame() then
                 if PickerFrameOuter.Visible then
                     ColorPicker:Hide()
                 else
                     ContextMenu:Hide()
                     ColorPicker:Show()
-                end
-            elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+                end;
+            elseif Input.UserInputType == Enum.UserInputType.MouseButton2 and not Library:MouseIsOverOpenedFrame() then
                 ContextMenu:Show()
                 ColorPicker:Hide()
             end
-        end)
-        
+        end);
 
         if TransparencyBoxInner then
-            local function UpdateTransparency(input)
-                local MinX = TransparencyBoxInner.AbsolutePosition.X
-                local MaxX = MinX + TransparencyBoxInner.AbsoluteSize.X
-                local MouseX = math.clamp(input.Position.X, MinX, MaxX)
-        
-                ColorPicker.Transparency = 1 - ((MouseX - MinX) / (MaxX - MinX))
-                ColorPicker:Display()
-            end
-        
-            TransparencyBoxInner.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    UpdateTransparency(input)
-        
-                    local moveConnection
-                    moveConnection = InputService.InputChanged:Connect(function(moveInput)
-                        if moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch then
-                            UpdateTransparency(moveInput)
-                        end
-                    end)
-        
-                    local releaseConnection
-                    releaseConnection = InputService.InputEnded:Connect(function(endInput)
-                        if endInput.UserInputType == Enum.UserInputType.MouseButton1 or endInput.UserInputType == Enum.UserInputType.Touch then
-                            moveConnection:Disconnect()
-                            releaseConnection:Disconnect()
-                            Library:AttemptSave()
-                        end
-                    end)
-                end
-            end)
-        end
-        
-        -- 🟢 Universal Click Handling for Closing the Color Picker
-        Library:GiveSignal(InputService.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                local AbsPos, AbsSize = PickerFrameOuter.AbsolutePosition, PickerFrameOuter.AbsoluteSize
-        
-                if input.Position.X < AbsPos.X or input.Position.X > AbsPos.X + AbsSize.X
-                    or input.Position.Y < (AbsPos.Y - 20 - 1) or input.Position.Y > AbsPos.Y + AbsSize.Y then
-                    ColorPicker:Hide()
-                end
-        
+            TransparencyBoxInner.InputBegan:Connect(function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                    while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or Input.UserInputType == Enum.UserInputType.Touch do
+                        local MinX = TransparencyBoxInner.AbsolutePosition.X;
+                        local MaxX = MinX + TransparencyBoxInner.AbsoluteSize.X;
+                        local MouseX = math.clamp(Mouse.X, MinX, MaxX);
+
+                        ColorPicker.Transparency = 1 - ((MouseX - MinX) / (MaxX - MinX));
+
+                        ColorPicker:Display();
+
+                        RenderStepped:Wait();
+                    end;
+
+                    Library:AttemptSave();
+                end;
+            end);
+        end;
+
+        Library:GiveSignal(InputService.InputBegan:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                local AbsPos, AbsSize = PickerFrameOuter.AbsolutePosition, PickerFrameOuter.AbsoluteSize;
+
+                if Mouse.X < AbsPos.X or Mouse.X > AbsPos.X + AbsSize.X
+                    or Mouse.Y < (AbsPos.Y - 20 - 1) or Mouse.Y > AbsPos.Y + AbsSize.Y then
+
+                    ColorPicker:Hide();
+                end;
+
                 if not Library:IsMouseOverFrame(ContextMenu.Container) then
                     ContextMenu:Hide()
                 end
-            end
-        
-            if input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.Touch and ContextMenu.Container.Visible then
+            end;
+
+            if Input.UserInputType == Enum.UserInputType.MouseButton2 and ContextMenu.Container.Visible then
                 if not Library:IsMouseOverFrame(ContextMenu.Container) and not Library:IsMouseOverFrame(DisplayFrame) then
                     ContextMenu:Hide()
                 end
             end
-
-
-            ColorPicker:Display()
-            ColorPicker.DisplayFrame = DisplayFrame
-            
-            Options[Idx] = ColorPicker
-            
-            return self
-
         end))
-        
-    
-        
+
+        ColorPicker:Display();
+        ColorPicker.DisplayFrame = DisplayFrame
+
+        Options[Idx] = ColorPicker;
+
+        return self;
+    end;
 
     function Funcs:AddKeyPicker(Idx, Info)
         local ParentObj = self;
@@ -1453,99 +1438,78 @@ do
     end;
 
     function Funcs:AddButton(...)
-        local Button = {}
-    
-        -- Process button parameters (Text, Function, Tooltip, etc.)
-        local function ProcessButtonParams(Obj, ...)
+        -- TODO: Eventually redo this
+        local Button = {};
+        local function ProcessButtonParams(Class, Obj, ...)
             local Props = select(1, ...)
             if type(Props) == 'table' then
                 Obj.Text = Props.Text
                 Obj.Func = Props.Func
+                Obj.DoubleClick = Props.DoubleClick
                 Obj.Tooltip = Props.Tooltip
             else
                 Obj.Text = select(1, ...)
                 Obj.Func = select(2, ...)
             end
-            assert(type(Obj.Func) == 'function', 'AddButton: `Func` callback is missing.')
+
+            assert(type(Obj.Func) == 'function', 'AddButton: `Func` callback is missing.');
         end
-    
-        ProcessButtonParams(Button, ...)
-    
-        local Groupbox = self
-        local Container = Groupbox.Container
-    
-        -- Button outer frame (black border)
-        local Outer = Library:Create('Frame', {
-            BackgroundColor3 = Color3.new(0, 0, 0),
-            BorderColor3 = Color3.new(0, 0, 0),
-            Size = UDim2.new(1, -4, 0, 20),
-            ZIndex = 5,
-            Parent = Container
-        })
-    
-        -- Inner button (changed to TextButton for universal compatibility)
-        local Inner = Library:Create('TextButton', { -- Changed from 'Frame' to 'TextButton'
-            BackgroundColor3 = Library.MainColor,
-            BorderColor3 = Library.OutlineColor,
-            BorderMode = Enum.BorderMode.Inset,
-            Size = UDim2.new(1, 0, 1, 0),
-            ZIndex = 6,
-            Parent = Outer,
-            Text = "", -- Prevents default Roblox button text
-            AutoButtonColor = false, -- Prevents default hover effect
-        })
-    
-        -- Button label
-        local Label = Library:CreateLabel({
-            Size = UDim2.new(1, 0, 1, 0),
-            TextSize = 14,
-            Text = Button.Text,
-            ZIndex = 6,
-            Parent = Inner
-        })
-    
-        -- Apply button styling
-        Library:Create('UIGradient', {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(212, 212, 212))
-            }),
-            Rotation = 90,
-            Parent = Inner
-        })
-    
-        Library:AddToRegistry(Outer, {
-            BorderColor3 = 'Black'
-        })
-    
-        Library:AddToRegistry(Inner, {
-            BackgroundColor3 = 'MainColor',
-            BorderColor3 = 'OutlineColor'
-        })
-    
-        Library:OnHighlight(Outer, Outer,
-            { BorderColor3 = 'AccentColor' },
-            { BorderColor3 = 'Black' }
-        )
-    
-        -- 🟢 Universal Click Handling (PC & Mobile)
-        Inner.MouseButton1Click:Connect(function()
-            if not Button.Locked then
-                Library:SafeCallback(Button.Func)
-            end
-        end)
-    
-        -- Tooltip Support
-        if type(Button.Tooltip) == 'string' then
-            Library:AddToolTip(Button.Tooltip, Outer)
+
+        ProcessButtonParams('Button', Button, ...)
+
+        local Groupbox = self;
+        local Container = Groupbox.Container;
+
+        local function CreateBaseButton(Button)
+            local Outer = Library:Create('Frame', {
+                BackgroundColor3 = Color3.new(0, 0, 0);
+                BorderColor3 = Color3.new(0, 0, 0);
+                Size = UDim2.new(1, -4, 0, 20);
+                ZIndex = 5;
+            });
+
+            local Inner = Library:Create('Frame', {
+                BackgroundColor3 = Library.MainColor;
+                BorderColor3 = Library.OutlineColor;
+                BorderMode = Enum.BorderMode.Inset;
+                Size = UDim2.new(1, 0, 1, 0);
+                ZIndex = 6;
+                Parent = Outer;
+            });
+
+            local Label = Library:CreateLabel({
+                Size = UDim2.new(1, 0, 1, 0);
+                TextSize = 14;
+                Text = Button.Text;
+                ZIndex = 6;
+                Parent = Inner;
+            });
+
+            Library:Create('UIGradient', {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(212, 212, 212))
+                });
+                Rotation = 90;
+                Parent = Inner;
+            });
+
+            Library:AddToRegistry(Outer, {
+                BorderColor3 = 'Black';
+            });
+
+            Library:AddToRegistry(Inner, {
+                BackgroundColor3 = 'MainColor';
+                BorderColor3 = 'OutlineColor';
+            });
+
+            Library:OnHighlight(Outer, Outer,
+                { BorderColor3 = 'AccentColor' },
+                { BorderColor3 = 'Black' }
+            );
+
+            return Outer, Inner, Label
         end
-    
-        -- Add to UI and resize
-        Groupbox:AddBlank(5)
-        Groupbox:Resize()
-    
-        return Button
-    end
 
         local function InitEvents(Button)
             local function WaitForEvent(event, timeout, validator)
@@ -1570,7 +1534,7 @@ do
                     return false
                 end
 
-                if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+                if Input.UserInputType =~ Enum.UserInputType.MouseButton1 and Input.UserInputType =~ Enum.UserInputType.Touch then
                     return false
                 end
 
@@ -2187,7 +2151,7 @@ do
                 local gPos = Fill.Size.X.Offset;
                 local Diff = mPos - (Fill.AbsolutePosition.X + gPos);
 
-                while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or Input.UserInputType == Enum.UserInputType.Touch do
                     local nMPos = Mouse.X;
                     local nX = math.clamp(gPos + (nMPos - mPos) + Diff, 0, Slider.MaxSize);
 
