@@ -166,7 +166,6 @@ function Library:MakeDraggable(Instance, Cutoff)
     local dragInput, startPos, startPosMouse
 
     Instance.InputBegan:Connect(function(input)
-        print(input.UserInputType)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             local ObjPos = Vector2.new(
                 input.Position.X - Instance.AbsolutePosition.X,
@@ -3515,6 +3514,7 @@ function Library:CreateWindow(...)
         end;
 
         TabButton.InputBegan:Connect(function(Input)
+            print(Input.UserInputType)
             if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
                 Tab:ShowTab();
             end;
