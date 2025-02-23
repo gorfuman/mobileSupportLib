@@ -11,7 +11,6 @@ local Mouse = LocalPlayer:GetMouse();
 
 local isMobile = InputService.TouchEnabled
 
-isMobile = true
 
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
