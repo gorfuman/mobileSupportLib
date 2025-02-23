@@ -694,7 +694,7 @@ do
                 Visible = false,
                 Parent = ScreenGui
             })
-
+        end
             ContextMenu.Inner = Library:Create('Frame', {
                 BackgroundColor3 = Library.BackgroundColor;
                 BorderColor3 = Library.OutlineColor;
@@ -1030,7 +1030,7 @@ do
                 end
             end
         
-            if input.UserInputType == Enum.UserInputType.MouseButton2 and ContextMenu.Container.Visible then
+            if input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.Touch and ContextMenu.Container.Visible then
                 if not Library:IsMouseOverFrame(ContextMenu.Container) and not Library:IsMouseOverFrame(DisplayFrame) then
                     ContextMenu:Hide()
                 end
