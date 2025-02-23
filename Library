@@ -3684,7 +3684,7 @@ function Library:CreateWindow(...)
     end))
 
 
-    end
+    
 
 
     if Config.AutoShow then task.spawn(Library.Toggle) end
