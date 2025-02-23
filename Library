@@ -191,6 +191,7 @@ function Library:MakeDraggable(Instance, Cutoff)
 
     Instance.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            print(input.UserInputType)
             dragInput = input
         end
     end)
@@ -3514,7 +3515,6 @@ function Library:CreateWindow(...)
         end;
 
         TabButton.InputBegan:Connect(function(Input)
-            print(Input.UserInputType)
             if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
                 Tab:ShowTab();
             end;
