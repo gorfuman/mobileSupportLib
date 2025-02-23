@@ -1035,14 +1035,18 @@ do
                     ContextMenu:Hide()
                 end
             end
+
+
+            ColorPicker:Display()
+            ColorPicker.DisplayFrame = DisplayFrame
+            
+            Options[Idx] = ColorPicker
+            
+            return self
+
         end))
         
-        ColorPicker:Display()
-        ColorPicker.DisplayFrame = DisplayFrame
-        
-        Options[Idx] = ColorPicker
-        
-        return self
+    
         
 
     function Funcs:AddKeyPicker(Idx, Info)
