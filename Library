@@ -3561,7 +3561,7 @@ function Library:CreateWindow(...)
             task.spawn(Library.Toggle)
         end)
 
-    end
+end
 
 
 
