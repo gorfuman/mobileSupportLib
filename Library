@@ -11,7 +11,7 @@ local Mouse = LocalPlayer:GetMouse();
 
 local isMobile = InputService.TouchEnabled
 
-
+-- bro pls work im crying brooo
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 
@@ -3561,7 +3561,7 @@ function Library:CreateWindow(...)
             task.spawn(Library.Toggle)
         end)
 
-end
+        end
 
 
 
