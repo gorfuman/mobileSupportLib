@@ -685,7 +685,7 @@ do
 
 
         local ContextMenu = {}
-        do
+        
             ContextMenu.Options = {}
             ContextMenu.Container = Library:Create('Frame', {
                 BorderColor3 = Color3.new(),
@@ -694,7 +694,7 @@ do
                 Visible = false,
                 Parent = ScreenGui
             })
-        end
+        
             ContextMenu.Inner = Library:Create('Frame', {
                 BackgroundColor3 = Library.BackgroundColor;
                 BorderColor3 = Library.OutlineColor;
