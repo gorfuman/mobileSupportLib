@@ -2196,6 +2196,9 @@ do
             Info.AllowNull = true;
         end;
 
+
+
+
         assert(Info.Values, 'AddDropdown: Missing dropdown value list.');
         assert(Info.AllowNull or Info.Default, 'AddDropdown: Missing default value. Pass `AllowNull` as true if this was intentional.')
 
@@ -2372,6 +2375,7 @@ do
 
             if Info.Multi then
                 for Idx, Value in next, Values do
+                    print(Value.Name)
                     if Dropdown.Value[Value] then
                         Str = Str .. Value .. ', ';
                     end;
