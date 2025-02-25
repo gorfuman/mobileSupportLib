@@ -2160,9 +2160,16 @@ do
             return tonumber(string.format('%.' .. Slider.Rounding .. 'f', Value))
         end
     
+        
         function Slider:GetValueFromXOffset(X)
-            return Round(Library:MapValue(X, 0, Slider.MaxSize, Slider.Min, Slider.Max))
+            local effectiveMax = Slider.MaxSize
+            if isMobile then
+                effectiveMax = Slider.MaxSize * 0.8
+            end
+            return Round(Library:MapValue(X, 0, effectiveMax, Slider.Min, Slider.Max))
         end
+
+
     
         function Slider:SetValue(Str)
             local Num = tonumber(Str)
@@ -2179,72 +2186,82 @@ do
         -- Make sure the slider frame accepts input:
         
 
+
         SliderInner.Active = true
-        SliderInner.Selectable = true
-        
-        SliderInner.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-               input.UserInputType == Enum.UserInputType.Touch then
-        
-                print("[Slider] InputBegan detected:", input.UserInputType, "at", input.Position)
-        
-                local function updateValue(newPosX)
-                    local sliderX = SliderInner.AbsolutePosition.X
-                    local relativeX = newPosX - sliderX
-                    relativeX = math.clamp(relativeX, 0, Slider.MaxSize)
-                    local newValue = Slider:GetValueFromXOffset(relativeX)
-                    print("[Slider] updateValue called: newPosX =", newPosX, 
-                          "sliderX =", sliderX, 
-                          "relativeX =", relativeX, 
-                          "calculated newValue =", newValue, 
-                          "current Slider.Value =", Slider.Value)
-                    if newValue ~= Slider.Value then
-                        Slider.Value = newValue
-                        Slider:Display()
-                        Library:SafeCallback(Slider.Callback, Slider.Value)
-                        Library:SafeCallback(Slider.Changed, Slider.Value)
-                    end
+SliderInner.Selectable = true
+
+SliderInner.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+       input.UserInputType == Enum.UserInputType.Touch then
+
+        print("[Slider] InputBegan detected:", input.UserInputType, "at", input.Position)
+
+        local function updateValue(newPosX)
+            -- Adjust both the pointer position and the slider's X position on mobile.
+            local adjustedPosX = newPosX
+            local sliderX = SliderInner.AbsolutePosition.X
+            local effectiveMaxSize = Slider.MaxSize
+            if isMobile then
+                adjustedPosX = newPosX * 0.8
+                sliderX = SliderInner.AbsolutePosition.X * 0.8
+                effectiveMaxSize = Slider.MaxSize * 0.8
+            end
+
+            local relativeX = adjustedPosX - sliderX
+            relativeX = math.clamp(relativeX, 0, effectiveMaxSize)
+            local newValue = Slider:GetValueFromXOffset(relativeX)
+            print("[Slider] updateValue called: newPosX =", newPosX, 
+                  "adjustedPosX =", adjustedPosX,
+                  "sliderX =", sliderX, 
+                  "relativeX =", relativeX, 
+                  "effectiveMaxSize =", effectiveMaxSize,
+                  "calculated newValue =", newValue, 
+                  "current Slider.Value =", Slider.Value)
+            if newValue ~= Slider.Value then
+                Slider.Value = newValue
+                Slider:Display()
+                Library:SafeCallback(Slider.Callback, Slider.Value)
+                Library:SafeCallback(Slider.Changed, Slider.Value)
+            end
+        end
+
+        -- Update immediately at input begin.
+        updateValue(input.Position.X)
+
+        local changeConn = InputService.InputChanged:Connect(function(currentInput)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if currentInput.UserInputType == Enum.UserInputType.MouseMovement then
+                    print("[Slider] InputChanged detected (MouseMovement):", currentInput.Position)
+                    updateValue(currentInput.Position.X)
                 end
-        
-                -- Update immediately at input begin.
-                updateValue(input.Position.X)
-        
-                local changeConn = InputService.InputChanged:Connect(function(currentInput)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        -- For mouse drags, the movement events are MouseMovement.
-                        if currentInput.UserInputType == Enum.UserInputType.MouseMovement then
-                            print("[Slider] InputChanged detected (MouseMovement):", currentInput.Position)
-                            updateValue(currentInput.Position.X)
-                        end
-                    elseif input.UserInputType == Enum.UserInputType.Touch then
-                        -- For touch, the events remain Touch.
-                        if currentInput.UserInputType == Enum.UserInputType.Touch then
-                            print("[Slider] InputChanged detected (Touch):", currentInput.Position)
-                            updateValue(currentInput.Position.X)
-                        end
-                    end
-                end)
-        
-                local endedConn
-                endedConn = InputService.InputEnded:Connect(function(endedInput)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        if endedInput.UserInputType == Enum.UserInputType.MouseButton1 then
-                            print("[Slider] InputEnded detected (MouseButton1):", endedInput.Position)
-                            changeConn:Disconnect()
-                            endedConn:Disconnect()
-                            Library:AttemptSave()
-                        end
-                    elseif input.UserInputType == Enum.UserInputType.Touch then
-                        if endedInput.UserInputType == Enum.UserInputType.Touch then
-                            print("[Slider] InputEnded detected (Touch):", endedInput.Position)
-                            changeConn:Disconnect()
-                            endedConn:Disconnect()
-                            Library:AttemptSave()
-                        end
-                    end
-                end)
+            elseif input.UserInputType == Enum.UserInputType.Touch then
+                if currentInput.UserInputType == Enum.UserInputType.Touch then
+                    print("[Slider] InputChanged detected (Touch):", currentInput.Position)
+                    updateValue(currentInput.Position.X)
+                end
             end
         end)
+
+        local endedConn
+        endedConn = InputService.InputEnded:Connect(function(endedInput)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if endedInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                    print("[Slider] InputEnded detected (MouseButton1):", endedInput.Position)
+                    changeConn:Disconnect()
+                    endedConn:Disconnect()
+                    Library:AttemptSave()
+                end
+            elseif input.UserInputType == Enum.UserInputType.Touch then
+                if endedInput.UserInputType == Enum.UserInputType.Touch then
+                    print("[Slider] InputEnded detected (Touch):", endedInput.Position)
+                    changeConn:Disconnect()
+                    endedConn:Disconnect()
+                    Library:AttemptSave()
+                end
+            end
+        end)
+    end
+end)
 
         Slider:Display()
         Groupbox:AddBlank(Info.BlankSize or 6)
