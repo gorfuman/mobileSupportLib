@@ -2173,8 +2173,12 @@ do
     
                     endedConn = InputService.InputEnded:Connect(function(endedInput)
                     if endedInput.UserInputType == input.UserInputType then
+                        if changeConn then
                         changeConn:Disconnect()
+                        end
+                        if endedConn then
                         endedConn:Disconnect()
+                        end
                         Library:AttemptSave()
                     end
                 end)
