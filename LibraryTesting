@@ -2170,7 +2170,6 @@ do
         SliderInner.Active = true
         SliderInner.Selectable = true
         
-        -- Input handling to support dragging with debug prints
         SliderInner.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or 
                input.UserInputType == Enum.UserInputType.Touch then
@@ -2195,28 +2194,46 @@ do
                     end
                 end
         
-                -- Update immediately when the input begins
+                -- Update immediately at input begin.
                 updateValue(input.Position.X)
         
                 local changeConn = InputService.InputChanged:Connect(function(currentInput)
-                    if currentInput.UserInputType == input.UserInputType then
-                        print("[Slider] InputChanged detected:", currentInput.UserInputType, "at", currentInput.Position)
-                        updateValue(currentInput.Position.X)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        -- For mouse drags, the movement events are MouseMovement.
+                        if currentInput.UserInputType == Enum.UserInputType.MouseMovement then
+                            print("[Slider] InputChanged detected (MouseMovement):", currentInput.Position)
+                            updateValue(currentInput.Position.X)
+                        end
+                    elseif input.UserInputType == Enum.UserInputType.Touch then
+                        -- For touch, the events remain Touch.
+                        if currentInput.UserInputType == Enum.UserInputType.Touch then
+                            print("[Slider] InputChanged detected (Touch):", currentInput.Position)
+                            updateValue(currentInput.Position.X)
+                        end
                     end
                 end)
         
                 local endedConn
                 endedConn = InputService.InputEnded:Connect(function(endedInput)
-                    if endedInput.UserInputType == input.UserInputType then
-                        print("[Slider] InputEnded detected:", endedInput.UserInputType, "at", endedInput.Position)
-                        changeConn:Disconnect()
-                        endedConn:Disconnect()
-                        Library:AttemptSave()
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if endedInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                            print("[Slider] InputEnded detected (MouseButton1):", endedInput.Position)
+                            changeConn:Disconnect()
+                            endedConn:Disconnect()
+                            Library:AttemptSave()
+                        end
+                    elseif input.UserInputType == Enum.UserInputType.Touch then
+                        if endedInput.UserInputType == Enum.UserInputType.Touch then
+                            print("[Slider] InputEnded detected (Touch):", endedInput.Position)
+                            changeConn:Disconnect()
+                            endedConn:Disconnect()
+                            Library:AttemptSave()
+                        end
                     end
                 end)
             end
         end)
-        
+
         Slider:Display()
         Groupbox:AddBlank(Info.BlankSize or 6)
         Groupbox:Resize()
