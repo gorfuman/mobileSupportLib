@@ -296,16 +296,34 @@ function Library:OnHighlight(HighlightInstance, Instance, Properties, Properties
     end)
 end;
 
+local lastInputPosition = Vector2.new(0, 0)
+
+-- Update the position when input changes (for both PC and mobile)
+InputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or
+       input.UserInputType == Enum.UserInputType.Touch then
+        lastInputPosition = input.Position
+    end
+end)
+
+-- A helper function that returns the current input position.
+function Library:GetCurrentInputPosition()
+    return lastInputPosition
+end
+
+-- Updated MouseIsOverOpenedFrame that works on both PC and mobile.
 function Library:MouseIsOverOpenedFrame()
+    local pos = self:GetCurrentInputPosition()
     for Frame, _ in next, Library.OpenedFrames do
         local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
-        if Mouse.X >= AbsPos.X and Mouse.X <= AbsPos.X + AbsSize.X and
-           Mouse.Y >= AbsPos.Y and Mouse.Y <= AbsPos.Y + AbsSize.Y then
+        if pos.X >= AbsPos.X and pos.X <= AbsPos.X + AbsSize.X and
+           pos.Y >= AbsPos.Y and pos.Y <= AbsPos.Y + AbsSize.Y then
             return true
         end
     end
     return false
 end
+
 
 function Library:IsMouseOverFrame(Frame)
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
@@ -1990,6 +2008,7 @@ do
         return Toggle;
     end;
 
+   
     function Funcs:AddSlider(Idx, Info)
         assert(Info.Default, 'AddSlider: Missing default value.')
         assert(Info.Text, 'AddSlider: Missing slider text.')
@@ -2018,7 +2037,7 @@ do
                 TextXAlignment = Enum.TextXAlignment.Left;
                 TextYAlignment = Enum.TextYAlignment.Bottom;
                 ZIndex = 5;
-                Parent = Container;
+                Parent = Container,
             })
     
             Groupbox:AddBlank(3)
@@ -2029,11 +2048,11 @@ do
             BorderColor3 = Color3.new(0, 0, 0);
             Size = UDim2.new(1, -4, 0, 13);
             ZIndex = 5;
-            Parent = Container;
+            Parent = Container,
         })
     
         Library:AddToRegistry(SliderOuter, {
-            BorderColor3 = 'Black';
+            BorderColor3 = 'Black',
         })
     
         local SliderInner = Library:Create('Frame', {
@@ -2041,47 +2060,47 @@ do
             BorderColor3 = Library.OutlineColor;
             BorderMode = Enum.BorderMode.Inset;
             Size = UDim2.new(1, 0, 1, 0);
-            ZIndex = 6;
-            Parent = SliderOuter;
+            ZIndex = 6,
+            Parent = SliderOuter,
         })
     
         Library:AddToRegistry(SliderInner, {
-            BackgroundColor3 = 'MainColor';
-            BorderColor3 = 'OutlineColor';
+            BackgroundColor3 = 'MainColor',
+            BorderColor3 = 'OutlineColor',
         })
     
         local Fill = Library:Create('Frame', {
-            BackgroundColor3 = Library.AccentColor;
-            BorderColor3 = Library.AccentColorDark;
-            Size = UDim2.new(0, 0, 1, 0);
-            ZIndex = 7;
-            Parent = SliderInner;
+            BackgroundColor3 = Library.AccentColor,
+            BorderColor3 = Library.AccentColorDark,
+            Size = UDim2.new(0, 0, 1, 0),
+            ZIndex = 7,
+            Parent = SliderInner,
         })
     
         Library:AddToRegistry(Fill, {
-            BackgroundColor3 = 'AccentColor';
-            BorderColor3 = 'AccentColorDark';
+            BackgroundColor3 = 'AccentColor',
+            BorderColor3 = 'AccentColorDark',
         })
     
         local HideBorderRight = Library:Create('Frame', {
-            BackgroundColor3 = Library.AccentColor;
-            BorderSizePixel = 0;
-            Position = UDim2.new(1, 0, 0, 0);
-            Size = UDim2.new(0, 1, 1, 0);
-            ZIndex = 8;
-            Parent = Fill;
+            BackgroundColor3 = Library.AccentColor,
+            BorderSizePixel = 0,
+            Position = UDim2.new(1, 0, 0, 0),
+            Size = UDim2.new(0, 1, 1, 0),
+            ZIndex = 8,
+            Parent = Fill,
         })
     
         Library:AddToRegistry(HideBorderRight, {
-            BackgroundColor3 = 'AccentColor';
+            BackgroundColor3 = 'AccentColor',
         })
     
         local DisplayLabel = Library:CreateLabel({
-            Size = UDim2.new(1, 0, 1, 0);
-            TextSize = 14;
-            Text = 'Infinite';
-            ZIndex = 9;
-            Parent = SliderInner;
+            Size = UDim2.new(1, 0, 1, 0),
+            TextSize = 14,
+            Text = 'Infinite',
+            ZIndex = 9,
+            Parent = SliderInner,
         })
     
         Library:OnHighlight(SliderOuter, SliderOuter,
@@ -2094,8 +2113,8 @@ do
         end
     
         function Slider:UpdateColors()
-            Fill.BackgroundColor3 = Library.AccentColor;
-            Fill.BorderColor3 = Library.AccentColorDark;
+            Fill.BackgroundColor3 = Library.AccentColor
+            Fill.BorderColor3 = Library.AccentColorDark
         end
     
         function Slider:Display()
@@ -2132,7 +2151,7 @@ do
     
         function Slider:SetValue(Str)
             local Num = tonumber(Str)
-            if (not Num) then
+            if not Num then
                 return
             end
             Num = math.clamp(Num, Slider.Min, Slider.Max)
@@ -2142,12 +2161,15 @@ do
             Library:SafeCallback(Slider.Changed, Slider.Value)
         end
     
-        -- Updated Input handling: use InputChanged and InputEnded for proper touch support.
+        -- Make sure the slider frame accepts input:
+        SliderInner.Active = true
+        SliderInner.Selectable = true
+    
+        -- Use InputBegan, InputChanged, and InputEnded for proper mouse/touch behavior.
         SliderInner.InputBegan:Connect(function(input)
             if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
                and not Library:MouseIsOverOpenedFrame() then
     
-                -- Capture the starting X position from the input
                 local startPos = input.Position.X
                 local initialFillOffset = Fill.Size.X.Offset
                 local diff = startPos - (Fill.AbsolutePosition.X + initialFillOffset)
@@ -2168,17 +2190,12 @@ do
                         updateValue(currentInput.Position.X)
                     end
                 end)
-
-                local endedConn
     
-                    endedConn = InputService.InputEnded:Connect(function(endedInput)
+                local endedConn
+                endedConn = InputService.InputEnded:Connect(function(endedInput)
                     if endedInput.UserInputType == input.UserInputType then
-                        if changeConn then
                         changeConn:Disconnect()
-                        end
-                        if endedConn then
                         endedConn:Disconnect()
-                        end
                         Library:AttemptSave()
                     end
                 end)
@@ -2192,6 +2209,7 @@ do
         Options[Idx] = Slider
         return Slider
     end
+
 
     function Funcs:AddDropdown(Idx, Info)
         if Info.SpecialType == 'Player' then
