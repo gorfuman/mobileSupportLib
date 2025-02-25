@@ -2171,12 +2171,13 @@ do
         SliderInner.Active = true
         SliderInner.Selectable = true
 
-        -- Updated input handling using relative X position.
+        -- Input handling to support dragging
         SliderInner.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                -- This function updates the slider's value based on the pointer's current X position.
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+            input.UserInputType == Enum.UserInputType.Touch then
+                
+                -- Function to update slider value based on current pointer position
                 local function updateValue(newPosX)
-                    -- Calculate the relative position of the pointer within the slider.
                     local sliderX = SliderInner.AbsolutePosition.X
                     local relativeX = newPosX - sliderX
                     relativeX = math.clamp(relativeX, 0, Slider.MaxSize)
@@ -2189,15 +2190,17 @@ do
                     end
                 end
 
-                -- Update immediately based on where the user clicked.
+                -- Update immediately based on the initial click/touch position
                 updateValue(input.Position.X)
 
+                -- Listen for changes as the pointer/finger moves
                 local changeConn = InputService.InputChanged:Connect(function(currentInput)
                     if currentInput.UserInputType == input.UserInputType then
                         updateValue(currentInput.Position.X)
                     end
                 end)
-                
+
+                -- When the input ends, disconnect the listeners
                 local endedConn
                 endedConn = InputService.InputEnded:Connect(function(endedInput)
                     if endedInput.UserInputType == input.UserInputType then
@@ -2208,7 +2211,8 @@ do
                 end)
             end
         end)
-    
+
+
         Slider:Display()
         Groupbox:AddBlank(Info.BlankSize or 6)
         Groupbox:Resize()
