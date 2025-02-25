@@ -328,9 +328,10 @@ end
 
 function Library:IsMouseOverFrame(Frame)
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
+    local pos = self:GetCurrentInputPosition()
 
-    if Mouse.X >= AbsPos.X and Mouse.X <= AbsPos.X + AbsSize.X
-        and Mouse.Y >= AbsPos.Y and Mouse.Y <= AbsPos.Y + AbsSize.Y then
+    if pos.X >= AbsPos.X and pos.X <= AbsPos.X + AbsSize.X
+        and pos.Y >= AbsPos.Y and pos.Y <= AbsPos.Y + AbsSize.Y then
 
         return true;
     end;
@@ -2026,7 +2027,7 @@ do
             Type = 'Slider';
             Callback = Info.Callback or function(Value) end;
         }
-    
+
         local Groupbox = self
         local Container = Groupbox.Container
     
