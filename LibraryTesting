@@ -333,7 +333,6 @@ function Library:IsMouseOverFrame(Frame)
 
     if pos.X >= AbsPos.X and pos.X <= AbsPos.X + AbsSize.X
         and pos.Y >= AbsPos.Y and pos.Y <= AbsPos.Y + AbsSize.Y then
-            print("Mouse over frame L. O. L.")
         return true;
     end;
 end;
@@ -2170,18 +2169,24 @@ do
 
         SliderInner.Active = true
         SliderInner.Selectable = true
-
-        -- Input handling to support dragging
+        
+        -- Input handling to support dragging with debug prints
         SliderInner.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-            input.UserInputType == Enum.UserInputType.Touch then
-                
-                -- Function to update slider value based on current pointer position
+               input.UserInputType == Enum.UserInputType.Touch then
+        
+                print("[Slider] InputBegan detected:", input.UserInputType, "at", input.Position)
+        
                 local function updateValue(newPosX)
                     local sliderX = SliderInner.AbsolutePosition.X
                     local relativeX = newPosX - sliderX
                     relativeX = math.clamp(relativeX, 0, Slider.MaxSize)
                     local newValue = Slider:GetValueFromXOffset(relativeX)
+                    print("[Slider] updateValue called: newPosX =", newPosX, 
+                          "sliderX =", sliderX, 
+                          "relativeX =", relativeX, 
+                          "calculated newValue =", newValue, 
+                          "current Slider.Value =", Slider.Value)
                     if newValue ~= Slider.Value then
                         Slider.Value = newValue
                         Slider:Display()
@@ -2189,21 +2194,21 @@ do
                         Library:SafeCallback(Slider.Changed, Slider.Value)
                     end
                 end
-
-                -- Update immediately based on the initial click/touch position
+        
+                -- Update immediately when the input begins
                 updateValue(input.Position.X)
-
-                -- Listen for changes as the pointer/finger moves
+        
                 local changeConn = InputService.InputChanged:Connect(function(currentInput)
                     if currentInput.UserInputType == input.UserInputType then
+                        print("[Slider] InputChanged detected:", currentInput.UserInputType, "at", currentInput.Position)
                         updateValue(currentInput.Position.X)
                     end
                 end)
-
-                -- When the input ends, disconnect the listeners
+        
                 local endedConn
                 endedConn = InputService.InputEnded:Connect(function(endedInput)
                     if endedInput.UserInputType == input.UserInputType then
+                        print("[Slider] InputEnded detected:", endedInput.UserInputType, "at", endedInput.Position)
                         changeConn:Disconnect()
                         endedConn:Disconnect()
                         Library:AttemptSave()
@@ -2211,8 +2216,7 @@ do
                 end)
             end
         end)
-
-
+        
         Slider:Display()
         Groupbox:AddBlank(Info.BlankSize or 6)
         Groupbox:Resize()
@@ -2410,7 +2414,6 @@ do
 
             if Info.Multi then
                 for Idx, Value in next, Values do
-                    print(Value.Name)
                     if Dropdown.Value[Value] then
                         Str = Str .. Value .. ', ';
                     end;
