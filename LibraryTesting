@@ -308,6 +308,7 @@ end)
 
 -- A helper function that returns the current input position.
 function Library:GetCurrentInputPosition()
+    print(lastInputPosition.X, lastInputPosition.Y)
     return lastInputPosition
 end
 
