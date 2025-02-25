@@ -8,19 +8,19 @@ local TweenService = game:GetService('TweenService');
 local RenderStepped = RunService.RenderStepped;
 local LocalPlayer = Players.LocalPlayer;
 local Mouse = LocalPlayer:GetMouse();
+local Camera = workspace.CurrentCamera
+
 
 local isMobile = InputService.TouchEnabled
+
 
 -- bro pls work im crying brooo
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 
 local ScreenGui = Instance.new('ScreenGui');
-
 local UIScale = Instance.new("UIScale", ScreenGui)
-
-UIScale.Scale = 0.5
-
+UIScale.Scale = (Camera.ViewportSize.X * Camera.ViewportSize.Y) / (1920*1080) 
 ProtectGui(ScreenGui);
 
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;
