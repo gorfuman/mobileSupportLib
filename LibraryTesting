@@ -344,9 +344,10 @@ function Library:UpdateDependencyBoxes()
     end;
 end;
 
-function Library:MapValue(Value, MinA, MaxA, MinB, MaxB)
-    return (1 - ((Value - MinA) / (MaxA - MinA))) * MinB + ((Value - MinA) / (MaxA - MinA)) * MaxB;
-end;
+function Library:MapValue(val, inMin, inMax, outMin, outMax)
+    return outMin + ((val - inMin) / (inMax - inMin)) * (outMax - outMin)
+end
+
 
 function Library:GetTextBounds(Text, Font, Size, Resolution)
     local Bounds = TextService:GetTextSize(Text, Size, Font, Resolution or Vector2.new(1920, 1080))
@@ -2165,25 +2166,21 @@ do
         end
     
         -- Make sure the slider frame accepts input:
+        
+
         SliderInner.Active = true
         SliderInner.Selectable = true
-    
-        -- Use InputBegan, InputChanged, and InputEnded for proper mouse/touch behavior.
-        SliderInner.InputBegan:Connect(function(input)
-            print("Inputbegan 4 slider")
-            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
-            print("yea its eiether of thgose")
-               and not Library:MouseIsOverOpenedFrame() then
 
-                print("not mouse is over opened fraemea yuppp")
-    
-                local startPos = input.Position.X
-                local initialFillOffset = Fill.Size.X.Offset
-                local diff = startPos - (Fill.AbsolutePosition.X + initialFillOffset)
-    
+        -- Updated input handling using relative X position.
+        SliderInner.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                -- This function updates the slider's value based on the pointer's current X position.
                 local function updateValue(newPosX)
-                    local newX = math.clamp(initialFillOffset + (newPosX - startPos) + diff, 0, Slider.MaxSize)
-                    local newValue = Slider:GetValueFromXOffset(newX)
+                    -- Calculate the relative position of the pointer within the slider.
+                    local sliderX = SliderInner.AbsolutePosition.X
+                    local relativeX = newPosX - sliderX
+                    relativeX = math.clamp(relativeX, 0, Slider.MaxSize)
+                    local newValue = Slider:GetValueFromXOffset(relativeX)
                     if newValue ~= Slider.Value then
                         Slider.Value = newValue
                         Slider:Display()
@@ -2191,17 +2188,18 @@ do
                         Library:SafeCallback(Slider.Changed, Slider.Value)
                     end
                 end
-    
+
+                -- Update immediately based on where the user clicked.
+                updateValue(input.Position.X)
+
                 local changeConn = InputService.InputChanged:Connect(function(currentInput)
-                    print("from chaneConn btwwww")
                     if currentInput.UserInputType == input.UserInputType then
                         updateValue(currentInput.Position.X)
                     end
                 end)
-    
+                
                 local endedConn
                 endedConn = InputService.InputEnded:Connect(function(endedInput)
-                    print("From endddconnnbvtwwwwwww")
                     if endedInput.UserInputType == input.UserInputType then
                         changeConn:Disconnect()
                         endedConn:Disconnect()
