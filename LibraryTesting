@@ -308,7 +308,7 @@ end)
 
 -- A helper function that returns the current input position.
 function Library:GetCurrentInputPosition()
-    print(lastInputPosition.X, lastInputPosition.Y)
+
     return lastInputPosition
 end
 
@@ -333,7 +333,7 @@ function Library:IsMouseOverFrame(Frame)
 
     if pos.X >= AbsPos.X and pos.X <= AbsPos.X + AbsSize.X
         and pos.Y >= AbsPos.Y and pos.Y <= AbsPos.Y + AbsSize.Y then
-
+            print("Mouse over frame L. O. L.")
         return true;
     end;
 end;
@@ -2170,8 +2170,12 @@ do
     
         -- Use InputBegan, InputChanged, and InputEnded for proper mouse/touch behavior.
         SliderInner.InputBegan:Connect(function(input)
+            print("Inputbegan 4 slider")
             if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
+            print("yea its eiether of thgose")
                and not Library:MouseIsOverOpenedFrame() then
+
+                print("not mouse is over opened fraemea yuppp")
     
                 local startPos = input.Position.X
                 local initialFillOffset = Fill.Size.X.Offset
@@ -2189,6 +2193,7 @@ do
                 end
     
                 local changeConn = InputService.InputChanged:Connect(function(currentInput)
+                    print("from chaneConn btwwww")
                     if currentInput.UserInputType == input.UserInputType then
                         updateValue(currentInput.Position.X)
                     end
@@ -2196,6 +2201,7 @@ do
     
                 local endedConn
                 endedConn = InputService.InputEnded:Connect(function(endedInput)
+                    print("From endddconnnbvtwwwwwww")
                     if endedInput.UserInputType == input.UserInputType then
                         changeConn:Disconnect()
                         endedConn:Disconnect()
