@@ -747,8 +747,8 @@ do
 
             local function updateMenuPosition()
                 ContextMenu.Container.Position = UDim2.fromOffset(
-                    (DisplayFrame.AbsolutePosition.X + DisplayFrame.AbsoluteSize.X) + 4,
-                    DisplayFrame.AbsolutePosition.Y + 1
+                    ((DisplayFrame.AbsolutePosition.X + DisplayFrame.AbsoluteSize.X) + 4) * scaleFactor,
+                    (DisplayFrame.AbsolutePosition.Y + 1) * scaleFactor
                 )
             end
 
@@ -761,8 +761,8 @@ do
                 end
 
                 ContextMenu.Container.Size = UDim2.fromOffset(
-                    menuWidth + 8,
-                    ContextMenu.Inner.Layout.AbsoluteContentSize.Y + 4
+                    (menuWidth + 8) * scaleFactor,
+                    (ContextMenu.Inner.Layout.AbsoluteContentSize.Y + 4) * scaleFactor
                 )
             end
 
