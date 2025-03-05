@@ -208,8 +208,8 @@ function Library:MakeDraggable(Instance, Cutoff)
         if input == dragInput and dragging then
             local delta = input.Position - startPosMouse
             Instance.Position = UDim2.new(
-                startPos.X.Scale * scaleFactor, (startPos.X.Offset + delta.X) * scaleFactor,
-                startPos.Y.Scale * scaleFactor, (startPos.Y.Offset + delta.Y) * scaleFactor
+                startPos.X.Scale, (startPos.X.Offset + delta.X),
+                startPos.Y.Scale, (startPos.Y.Offset + delta.Y)
             )
         end
     end)
@@ -2374,7 +2374,7 @@ do
         end;
 
         local function RecalculateListSize(YSize)
-            ListOuter.Size = UDim2.fromOffset(DropdownOuter.AbsoluteSize.X * scaleFactor, YSize * scaleFactor or (MAX_DROPDOWN_ITEMS * 20 + 2) * scaleFactor)
+            ListOuter.Size = UDim2.fromOffset(DropdownOuter.AbsoluteSize.X, YSize or (MAX_DROPDOWN_ITEMS * 20 + 2))
         end;
 
         RecalculateListPosition();
